@@ -1,0 +1,65 @@
+@import "version.inc" ;
+@import "outercurve.inc" ;
+
+#define { 
+    flavor: "${COMP??vc10}"; 
+    arch : "${PLAT??x86}";
+}
+
+
+package {
+    name: "libtiff-dev-common";
+    version: "${package-version}";
+    arch: any;
+    display-name: "libtiff Dev Library-common";
+}
+
+metadata {
+    summary: "The libtiff developer library (common)";
+    description: @"This software provides support for the Tag Image File Format (TIFF), a widely used format for storing image data."; 
+    icon: @"libtiff.png";
+    author-version : "4.0.1";
+    bug-tracker: "https://github.com/coapp-packages/libtiff/issues";
+    stability : "0";
+    licenses : {
+        CUSTOM
+    };
+}
+
+files[headers] {
+    root: "..\\libtiff";
+
+    include: {
+        "*.h",
+    };
+    
+    trim-path:all;
+    
+    // ensures that all the header files end up in a subfolder called 'include'
+    destination-path:"include";
+}
+
+
+files[docs] {
+    root: "..\\html\\";
+    include: {
+        "*"
+    };
+    
+    trim-path:all;
+    
+    // ensures that all the documentation files end up in a subfolder called 'docs'
+    destination-path:"docs";
+
+}
+
+// the 'name' of the developer library isn't terribly important...
+developer-library[libtiff] {
+    headers: { 
+        headers
+    };
+    
+    docs: {
+        docs
+    };
+}

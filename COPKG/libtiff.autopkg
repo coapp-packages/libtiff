@@ -1,0 +1,117 @@
+@import "version.inc";
+@import "outercurve.inc";
+
+#define { 
+    flavor: "${COMP??vc10}"; 
+    arch : "${PLAT??x86}";
+}
+
+package {
+    name: "libtiff[${flavor}]";
+    version: "${package-version}";
+    arch : "${arch}";
+    display-name: "libtiff";
+    location: "http://coapp.org/repository/${OutputFilename}";
+    feed: "http://coapp.org/repository/packages.atom.xml";
+    publisher: "CoApp Project";
+}
+
+metadata {
+    summary: "libtiff";
+    description:  @"This software provides support for the Tag Image File Format (TIFF), a widely used format for storing image data.";
+    icon: @"libtiff.png";
+    author-version : "4.0.1";
+    bug-tracker: "https://github.com/coapp-packages/libtiff/issues";
+    stability : "0";
+    licenses : {
+        CUSTOM
+    };
+}
+
+license[CUSTOM] {
+    license-url: "\README";
+    license-type: "CUSTOM";
+}
+
+compatability-policy {
+    minimum: "4.0";
+    maximum: "${OneLessThanCurrent}"; // this is the default
+    versions : {
+        "4.0",
+    }; // if not specified, find the versions by looking at the feeds and finding all the major/minor versions in range.
+}
+
+requires {
+    package: "libjpeg[${flavor}]-8.0.3-${Package.Architecture}";
+    package: "zlib[${flavor}]-1.2.5-${Package.Architecture}";
+}
+
+files[exes] {
+    root: @"..\output\vc10\${arch}\Release\bin";
+  
+    include: {
+        "*.exe",
+    };
+    
+    trim-path: all;
+};
+
+files[dlls] {
+    root: @"..\output\vc10\${arch}\Release\bin";
+  
+    include: {
+        "*.dll",
+    };
+    
+    trim-path: all;
+};
+
+files[files-to-sign] {
+    include: { 
+        dlls,
+        exes
+    };    
+}
+
+assembly[libtiff[${flavor}]] {
+    include : {
+        dlls
+    };
+}
+
+manifest[forexes] {
+    assembly : {
+        "libtiff[${flavor}]"
+    };
+    
+    include : { 
+        exes
+    };
+}
+
+application {
+    include : {
+        exes,
+    };
+}
+
+package-composition {
+    symlinks : { 
+        exes => @"${bin}\${each.Name}" = @"${packagedir}\${each.Name}";
+    };
+}
+
+signing {
+    attributes : {
+        company="Outercurve Foundation",
+        description="libtiff",
+        product-name="libtiff",
+        product-version="${package-version}",
+        file-version="${package-version}",
+    };
+    
+    replace-signature: true; 
+    include: { 
+        files-to-sign
+    };    
+}
