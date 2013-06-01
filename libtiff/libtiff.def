@@ -149,3 +149,6 @@ EXPORTS TIFFOpen
 	TIFFFindField
 	TIFFUnsetField
 	TIFFMergeFieldInfo
+	TIFFInitJPEG
+	TIFFInitOJPEG
+	TIFFInitZIP
