@@ -45,8 +45,8 @@ Homepage: http://www.remotesensing.org/libtiff/";
 
 	dependencies {
 		packages : {
-			zlib/1.2.7.34,
-			libjpeg/8.0.4.14,
+			zlib/1.2.8.6,
+			libjpeg/9.0.1.3,
 		};
 	}
 
