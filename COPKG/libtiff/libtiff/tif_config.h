@@ -29,6 +29,9 @@
 /* Define to 1 if you have the `setmode' function. */
 #define HAVE_SETMODE 1
 
+/* Define to 1 if you have the `snprintf' function. */
+#define HAVE_SNPRINTF 1
+
 /* Define to 1 if you have the declaration of `optarg', and to 0 if you don't. */
 #define HAVE_DECL_OPTARG 0
 
