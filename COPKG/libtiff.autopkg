@@ -21,7 +21,7 @@ nuget {
 		summary: "This software provides support for the Tag Image File Format (TIFF), a widely used format for storing image data.";
 		description: @"This software provides support for the Tag Image File Format (TIFF), a widely used format for storing image data.
 Homepage: http://www.remotesensing.org/libtiff/";
-		releaseNotes: "Release of 4.0.1 libraries.";
+		releaseNotes: "Release of 4.0.6 libraries.";
 		copyright: Copyright 2013;
 		tags: { tiff, native, CoApp };
 
