@@ -9,23 +9,23 @@ if "%1"=="noclean" (
 nuget restore libtiff\libtiff.sln
 
 setlocal
-call "C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" amd64
-call :build x64 v110
+call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd64
+call :build x64 v120
 endlocal
 
 setlocal
-call "C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" x86
-call :build Win32 v110
+call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86
+call :build Win32 v120
 endlocal
 
 setlocal
-call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" amd64
-call :build x64 v100
+call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+call :build x64 v140
 endlocal
 
 setlocal
-call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86
-call :build Win32 v100
+call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+call :build Win32 v140
 endlocal
 
 if "__NOCLEAN__"=="true" goto :eof

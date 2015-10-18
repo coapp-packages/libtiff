@@ -1,5 +1,13 @@
 @import @"version.inc";
 
+configurations {
+	UserPlatformToolset {
+	    // Needed because autopackage lacks VS2015 support
+        	key = "PlatformToolset";
+        	choices: "v120,v140";
+	};
+}
+
 nuget {
 	nuspec {
 		id = libtiff;
@@ -33,7 +41,7 @@ Homepage: http://www.remotesensing.org/libtiff/";
 			libtiff\libtiff\*.h,
 		};
 
-		("release,debug", "Win32,x64", "v100,v110") => {
+		("release,debug", "Win32,x64", "v120,v140") => {
 			[${0},${1},${2}] {
 				lib:     { libtiff\${0}\${1}\${2}\libtiff.lib };
 				bin:     { libtiff\${0}\${1}\${2}\libtiff.dll };
@@ -45,8 +53,8 @@ Homepage: http://www.remotesensing.org/libtiff/";
 
 	dependencies {
 		packages : {
-			zlib/1.2.8.6,
-			libjpeg/9.0.1.3,
+			zlib/1.2.8.8,
+			libjpeg/9.0.1.4,
 		};
 	}
 
