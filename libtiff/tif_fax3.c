@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.72 2010-06-09 17:17:13 bfriesen Exp $ */
+/* $Id: tif_fax3.c,v 1.75 2015-08-30 20:49:55 erouault Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -442,8 +442,9 @@ _TIFFFax3fillruns(unsigned char* buf, uint32* runs, uint32* erun, uint32 lastx)
 			FILL(n, cp);
 			run &= 7;
 		    }
+                    /* Explicit 0xff masking to make icc -check=conversions happy */
 		    if (run)
-			cp[0] |= 0xff00 >> run;
+			cp[0] = (unsigned char)((cp[0] | (0xff00 >> run))&0xff);
 		} else
 		    cp[0] |= _fillmasks[run]>>bx;
 		x += runs[1];
@@ -526,6 +527,7 @@ Fax3SetupState(TIFF* tif)
 					       "for Group 3/4 run arrays");
 	if (dsp->runs == NULL)
 		return (0);
+	memset( dsp->runs, 0, TIFFSafeMultiply(uint32,nruns,2)*sizeof(uint32));
 	dsp->curruns = dsp->runs;
 	if (needsRefLine)
 		dsp->refruns = dsp->runs + nruns;

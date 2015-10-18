@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.82 2011-02-18 20:53:05 fwarmerdam Exp $ */
+/* $Id: tiffiop.h,v 1.87 2015-08-23 17:49:01 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -55,6 +55,12 @@
 #else
 extern void *lfind(const void *, const void *, size_t *, size_t,
 		   int (*)(const void *, const void *));
+#endif
+
+#if !defined(HAVE_SNPRINTF) && !defined(HAVE__SNPRINTF)
+#undef snprintf
+#define snprintf _TIFF_snprintf_f
+extern int snprintf(char* str, size_t size, const char* format, ...);
 #endif
 
 #include "tiffio.h"
@@ -121,6 +127,7 @@ struct tiff {
         #define TIFF_BUF4WRITE  0x100000 /* rawcc bytes are for writing */
         #define TIFF_DIRTYSTRIP 0x200000 /* stripoffsets/stripbytecount dirty*/
         #define TIFF_PERSAMPLE  0x400000 /* get/set per sample tags as arrays */
+        #define TIFF_BUFFERMMAP 0x800000 /* read buffer (tif_rawdata) points into mmap() memory */
 	uint64               tif_diroff;       /* file offset of current directory */
 	uint64               tif_nextdiroff;   /* file offset of following directory */
 	uint64*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */
@@ -250,12 +257,59 @@ struct tiff {
 #define TIFFroundup_64(x, y) (TIFFhowmany_64(x,y)*(y))
 
 /* Safe multiply which returns zero if there is an integer overflow */
-#define TIFFSafeMultiply(t,v,m) ((((t)m != (t)0) && (((t)((v*m)/m)) == (t)v)) ? (t)(v*m) : (t)0)
+#define TIFFSafeMultiply(t,v,m) ((((t)(m) != (t)0) && (((t)(((v)*(m))/(m))) == (t)(v))) ? (t)((v)*(m)) : (t)0)
 
 #define TIFFmax(A,B) ((A)>(B)?(A):(B))
 #define TIFFmin(A,B) ((A)<(B)?(A):(B))
 
 #define TIFFArrayCount(a) (sizeof (a) / sizeof ((a)[0]))
+
+/*
+  Support for large files.
+
+  Windows read/write APIs support only 'unsigned int' rather than 'size_t'.
+  Windows off_t is only 32-bit, even in 64-bit builds.
+*/
+#if defined(HAVE_FSEEKO)
+/*
+  Use fseeko() and ftello() if they are available since they use
+  'off_t' rather than 'long'.  It is wrong to use fseeko() and
+  ftello() only on systems with special LFS support since some systems
+  (e.g. FreeBSD) support a 64-bit off_t by default.
+
+  For MinGW, __MSVCRT_VERSION__ must be at least 0x800 to expose these
+  interfaces. The MinGW compiler must support the requested version.  MinGW
+  does not distribute the CRT (it is supplied by Microsoft) so the correct CRT
+  must be available on the target computer in order for the program to run.
+*/
+#if defined(HAVE_FSEEKO)
+#  define fseek(stream,offset,whence)  fseeko(stream,offset,whence)
+#  define ftell(stream,offset,whence)  ftello(stream,offset,whence)
+#endif
+#endif
+#if defined(__WIN32__) && \
+        !(defined(_MSC_VER) && _MSC_VER < 1400) && \
+        !(defined(__MSVCRT_VERSION__) && __MSVCRT_VERSION__ < 0x800)
+typedef unsigned int TIFFIOSize_t;
+#define _TIFF_lseek_f(fildes,offset,whence)  _lseeki64(fildes,/* __int64 */ offset,whence)
+/* #define _TIFF_tell_f(fildes) /\* __int64 *\/ _telli64(fildes) */
+#define _TIFF_fseek_f(stream,offset,whence) _fseeki64(stream,/* __int64 */ offset,whence)
+#define _TIFF_fstat_f(fildes,stat_buff) _fstati64(fildes,/* struct _stati64 */ stat_buff)
+/* #define _TIFF_ftell_f(stream) /\* __int64 *\/ _ftelli64(stream) */
+/* #define _TIFF_stat_f(path,stat_buff) _stati64(path,/\* struct _stati64 *\/ stat_buff) */
+#define _TIFF_stat_s struct _stati64
+#define _TIFF_off_t __int64
+#else
+typedef size_t TIFFIOSize_t;
+#define _TIFF_lseek_f(fildes,offset,whence) lseek(fildes,offset,whence)
+/* #define _TIFF_tell_f(fildes) (_TIFF_lseek_f(fildes,0,SEEK_CUR)) */
+#define _TIFF_fseek_f(stream,offset,whence) fseek(stream,offset,whence)
+#define _TIFF_fstat_f(fildes,stat_buff) fstat(fildes,stat_buff)
+/* #define _TIFF_ftell_f(stream) ftell(stream) */
+/* #define _TIFF_stat_f(path,stat_buff) stat(path,stat_buff) */
+#define _TIFF_stat_s struct stat
+#define _TIFF_off_t off_t
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
