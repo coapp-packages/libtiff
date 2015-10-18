@@ -6,6 +6,8 @@ if "%1"=="noclean" (
 	set __NOCLEAN__=true
 	shift)
 
+nuget restore libtiff\libtiff.sln
+
 setlocal
 call "C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" amd64
 call :build x64 v110
