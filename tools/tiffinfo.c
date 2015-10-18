@@ -1,4 +1,4 @@
-/* $Id: tiffinfo.c,v 1.18 2010-10-21 19:07:32 fwarmerdam Exp $ */
+/* $Id: tiffinfo.c,v 1.23 2015-06-21 01:09:11 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -53,7 +53,7 @@ static int readdata = 0;		/* read data in file */
 static int stoponerr = 1;		/* stop on first read error */
 
 static	void usage(void);
-static	void tiffinfo(TIFF*, uint16, long);
+static	void tiffinfo(TIFF*, uint16, long, int);
 
 static void
 PrivateErrorHandler(const char* module, const char* fmt, va_list ap)
@@ -69,8 +69,10 @@ main(int argc, char* argv[])
 	int dirnum = -1, multiplefiles, c;
 	uint16 order = 0;
 	TIFF* tif;
+#if !HAVE_DECL_OPTARG
 	extern int optind;
 	extern char* optarg;
+#endif
 	long flags = 0;
 	uint64 diroff = 0;
 	int chopstrips = 0;		/* disable strip chopping */
@@ -139,19 +141,20 @@ main(int argc, char* argv[])
 		if (tif != NULL) {
 			if (dirnum != -1) {
 				if (TIFFSetDirectory(tif, (tdir_t) dirnum))
-					tiffinfo(tif, order, flags);
+					tiffinfo(tif, order, flags, 1);
 			} else if (diroff != 0) {
 				if (TIFFSetSubDirectory(tif, diroff))
-					tiffinfo(tif, order, flags);
+					tiffinfo(tif, order, flags, 1);
 			} else {
 				do {
-					toff_t offset;
+					toff_t offset=0;
 
-					tiffinfo(tif, order, flags);
+					tiffinfo(tif, order, flags, 1);
 					if (TIFFGetField(tif, TIFFTAG_EXIFIFD,
 							 &offset)) {
-						if (TIFFReadEXIFDirectory(tif, offset))
-							tiffinfo(tif, order, flags);
+						if (TIFFReadEXIFDirectory(tif, offset)) {
+							tiffinfo(tif, order, flags, 0);
+						}
 					}
 				} while (TIFFReadDirectory(tif));
 			}
@@ -217,7 +220,7 @@ TIFFReadContigStripData(TIFF* tif)
 
 	buf = (unsigned char *)_TIFFmalloc(TIFFStripSize(tif));
 	if (buf) {
-		uint32 row, h;
+		uint32 row, h=0;
 		uint32 rowsperstrip = (uint32)-1;
 
 		TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
@@ -244,9 +247,9 @@ TIFFReadSeparateStripData(TIFF* tif)
 
 	buf = (unsigned char *)_TIFFmalloc(TIFFStripSize(tif));
 	if (buf) {
-		uint32 row, h;
+		uint32 row, h=0;
 		uint32 rowsperstrip = (uint32)-1;
-		tsample_t s, samplesperpixel;
+		tsample_t s, samplesperpixel=0;
 
 		TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
 		TIFFGetField(tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip);
@@ -295,7 +298,7 @@ TIFFReadContigTileData(TIFF* tif)
 
 	buf = (unsigned char *)_TIFFmalloc(TIFFTileSize(tif));
 	if (buf) {
-		uint32 tw, th, w, h;
+		uint32 tw=0, th=0, w=0, h=0;
 		uint32 row, col;
 
 		TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
@@ -323,9 +326,9 @@ TIFFReadSeparateTileData(TIFF* tif)
 
 	buf = (unsigned char *)_TIFFmalloc(TIFFTileSize(tif));
 	if (buf) {
-		uint32 tw, th, w, h;
+		uint32 tw=0, th=0, w=0, h=0;
 		uint32 row, col;
-		tsample_t s, samplesperpixel;
+		tsample_t s, samplesperpixel=0;
 
 		TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
 		TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
@@ -350,7 +353,7 @@ TIFFReadSeparateTileData(TIFF* tif)
 void
 TIFFReadData(TIFF* tif)
 {
-	uint16 config;
+	uint16 config = PLANARCONFIG_CONTIG;
 
 	TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &config);
 	if (TIFFIsTiled(tif)) {
@@ -397,7 +400,7 @@ TIFFReadRawData(TIFF* tif, int bitrev)
 {
 	tstrip_t nstrips = TIFFNumberOfStrips(tif);
 	const char* what = TIFFIsTiled(tif) ? "Tile" : "Strip";
-	uint64* stripbc;
+	uint64* stripbc=NULL;
 
 	TIFFGetField(tif, TIFFTAG_STRIPBYTECOUNTS, &stripbc);
 	if (nstrips > 0) {
@@ -441,10 +444,10 @@ TIFFReadRawData(TIFF* tif, int bitrev)
 }
 
 static void
-tiffinfo(TIFF* tif, uint16 order, long flags)
+tiffinfo(TIFF* tif, uint16 order, long flags, int is_image)
 {
 	TIFFPrintDirectory(tif, stdout, flags);
-	if (!readdata)
+	if (!readdata || !is_image)
 		return;
 	if (rawdata) {
 		if (order) {
